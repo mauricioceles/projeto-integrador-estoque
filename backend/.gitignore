@@ -1,0 +1,21 @@
+# Dependências
+backend/node_modules/
+frontend/node_modules/
+
+# Banco de dados local
+backend/src/database/*.db
+backend/src/database/*.db-shm
+backend/src/database/*.db-wal
+
+# Arquivos gerados
+frontend/dist/
+
+# Variáveis de ambiente
+.env
+backend/.env
+frontend/.env
+
+# Sistema e editor
+.DS_Store
+Thumbs.db
+.vscode/
