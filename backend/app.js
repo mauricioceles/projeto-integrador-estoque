@@ -4,14 +4,17 @@ const cors = require("cors");
 require("./src/database/database");
 
 const fornecedoresRoutes = require("./src/routes/fornecedores.routes");
+const produtosRoutes = require("./src/routes/produtos.routes");
+const associacoesRoutes = require("./src/routes/associacoes.routes");
 
 const app = express();
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
-
 app.use("/fornecedores", fornecedoresRoutes);
+app.use("/produtos", produtosRoutes);
+app.use("/associacoes", associacoesRoutes);
 
 
 app.get("/", (req, res) => {
