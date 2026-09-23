@@ -1,11 +1,19 @@
+/* Conexão compartilhada com SQLite e definição das três tabelas do sistema. */
 const Database = require("better-sqlite3");
 const path = require("path");
 
+// __dirname fixa o banco nesta pasta, independentemente de onde o Node foi iniciado.
 const databasePath = path.join(__dirname, "estoque.db");
+// Abre o arquivo existente ou cria um novo banco se ele ainda não existir.
 const db = new Database(databasePath);
 
+// Ativa a verificação de chaves estrangeiras e as exclusões em cascata.
 db.pragma("foreign_keys = ON");
 
+// IF NOT EXISTS preserva tabelas existentes; não atualiza sua estrutura automaticamente.
+// NOT NULL exige valor; UNIQUE impede duplicidade; CURRENT_TIMESTAMP registra a criação em UTC.
+// A tabela intermediária representa a relação muitos-para-muitos. Sua chave composta
+// impede repetir o mesmo par. CASCADE remove vínculos, não o outro cadastro.
 db.exec(`
   CREATE TABLE IF NOT EXISTS fornecedores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,4 +56,5 @@ db.exec(`
   );
 `);
 
+// Exporta a mesma conexão para as rotas que acessam o banco.
 module.exports = db;

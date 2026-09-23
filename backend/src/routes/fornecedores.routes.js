@@ -1,12 +1,16 @@
+/* Operações de cadastro, consulta, edição e exclusão de fornecedores. */
 const express = require("express");
 const db = require("../database/database");
 
+// Agrupa rotas; req contém a requisição e res constrói a resposta HTTP.
 const router = express.Router();
 
+// Remove a máscara do CNPJ para comparar e armazenar um formato uniforme.
 function somenteNumeros(valor = "") {
   return String(valor).replace(/\D/g, "");
 }
 
+// Retorna erros por campo, utilizados pela interface para orientar o preenchimento.
 function validarFornecedor(dados) {
   const erros = {};
 
@@ -14,6 +18,7 @@ function validarFornecedor(dados) {
     erros.nome_empresa = "O nome da empresa é obrigatório.";
   }
 
+  // A validação atual verifica presença e 14 números; não calcula dígitos verificadores.
   const cnpj = somenteNumeros(dados.cnpj);
 
   if (!cnpj) {
@@ -44,6 +49,7 @@ function validarFornecedor(dados) {
 }
 
 // Listar todos os fornecedores
+// GET lista registros: all() retorna um array, inclusive vazio quando não há cadastros.
 router.get("/", (req, res) => {
   const fornecedores = db
     .prepare("SELECT * FROM fornecedores ORDER BY nome_empresa")
@@ -53,6 +59,7 @@ router.get("/", (req, res) => {
 });
 
 // Consultar um fornecedor pelo ID
+// O parâmetro :id vem da URL; get() busca um registro e 404 indica ausência.
 router.get("/:id", (req, res) => {
   const fornecedor = db
     .prepare("SELECT * FROM fornecedores WHERE id = ?")
@@ -68,6 +75,7 @@ router.get("/:id", (req, res) => {
 });
 
 // Cadastrar fornecedor
+// POST cria um registro: 400 indica dados inválidos, 409 duplicidade e 201 criação.
 router.post("/", (req, res) => {
   const erros = validarFornecedor(req.body);
 
@@ -90,6 +98,7 @@ router.post("/", (req, res) => {
     });
   }
 
+  // Os ? recebem valores separados do SQL, evitando concatenar dados do usuário na consulta.
   const comando = db.prepare(`
     INSERT INTO fornecedores (
       nome_empresa,
@@ -110,6 +119,7 @@ router.post("/", (req, res) => {
     req.body.contato_principal.trim()
   );
 
+  // lastInsertRowid identifica o cadastro recém-criado para devolvê-lo na resposta.
   const fornecedorCriado = db
     .prepare("SELECT * FROM fornecedores WHERE id = ?")
     .get(resultado.lastInsertRowid);
@@ -121,6 +131,7 @@ router.post("/", (req, res) => {
 });
 
 // Atualizar fornecedor
+// PUT recebe todos os campos do cadastro para atualizar o registro existente.
 router.put("/:id", (req, res) => {
   const fornecedor = db
     .prepare("SELECT * FROM fornecedores WHERE id = ?")
@@ -143,6 +154,7 @@ router.put("/:id", (req, res) => {
 
   const cnpj = somenteNumeros(req.body.cnpj);
 
+  // Na edição, id <> ? exclui o próprio fornecedor da busca por CNPJ duplicado.
   const cnpjExistente = db
     .prepare(`
       SELECT id
@@ -188,6 +200,7 @@ router.put("/:id", (req, res) => {
 });
 
 // Excluir fornecedor
+// DELETE remove o cadastro; changes informa quantas linhas foram afetadas.
 router.delete("/:id", (req, res) => {
   const resultado = db
     .prepare("DELETE FROM fornecedores WHERE id = ?")
@@ -204,4 +217,5 @@ router.delete("/:id", (req, res) => {
   });
 });
 
+// Disponibiliza estas rotas para registro no app.js.
 module.exports = router;

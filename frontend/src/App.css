@@ -1,9 +1,11 @@
+/* Limita a largura do conteúdo e centraliza a aplicação. */
 .sistema {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 24px;
 }
 
+/* Organiza título e botão de atualização lado a lado. */
 .cabecalho {
   display: flex;
   align-items: center;
@@ -29,6 +31,7 @@ h1 {
   color: #526575;
 }
 
+/* Ação principal e seus estados de interação. */
 .botao {
   background: #0f766e;
   color: white;
@@ -48,6 +51,7 @@ h1 {
   cursor: wait;
 }
 
+/* Cartões de totais em duas colunas. */
 .resumo {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -74,6 +78,7 @@ h1 {
   color: #0f766e;
 }
 
+/* Abas e destaque da seção selecionada. */
 .navegacao {
   display: flex;
   gap: 10px;
@@ -95,6 +100,7 @@ h1 {
   color: white;
 }
 
+/* Área branca que envolve cada tela de cadastro. */
 .painel {
   background: white;
   border: 1px solid #dfe7ec;
@@ -107,6 +113,7 @@ h1 {
   font-size: 22px;
 }
 
+/* Permite rolagem horizontal quando a tabela não cabe na tela. */
 .tabela-container {
   overflow-x: auto;
 }
@@ -138,6 +145,7 @@ tbody tr:hover {
   background: #f5fbfa;
 }
 
+/* Mensagem geral de erro, separada dos erros por campo. */
 .erro {
   background: #fff1f2;
   color: #9f1239;
@@ -147,6 +155,7 @@ tbody tr:hover {
   margin-bottom: 20px;
 }
 
+/* Ajusta cabeçalho e resumo para telas menores. */
 @media (max-width: 640px) {
   .sistema {
     padding: 24px 14px;
@@ -164,4 +173,115 @@ tbody tr:hover {
   .painel {
     padding: 16px;
   }
+}
+
+/* Formulário em duas colunas; fieldset permite bloquear todos os campos juntos. */
+.formulario-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.legenda-formulario {
+  margin-bottom: 16px;
+  color: #526575;
+  font-size: 14px;
+}
+
+/* Alinha rótulo, entrada e mensagem de validação. */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  border: 1px solid #b8c8d3;
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: white;
+  color: #243746;
+  font: inherit;
+}
+
+/* Realça o campo ativo e os campos com erro de validação. */
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.campo input[aria-invalid="true"],
+.campo select[aria-invalid="true"],
+.campo textarea[aria-invalid="true"] {
+  border-color: #be123c;
+}
+
+.erro-campo {
+  color: #9f1239;
+}
+
+/* Agrupa botões e permite quebra de linha. */
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Faz o elemento ocupar toda a largura do formulário. */
+.formulario-acoes {
+  grid-column: 1 / -1;
+}
+
+.painel .titulo-lista {
+  margin-top: 32px;
+}
+
+/* Retorno visual após uma operação confirmada pela API. */
+.sucesso {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.botao-excluir {
+  background: #fff1f2;
+  color: #9f1239;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+/* Indica ações temporariamente indisponíveis. */
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+  .formulario-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Permite aumentar a descrição sem alargar o formulário. */
+.campo textarea {
+  min-height: 100px;
+  resize: vertical;
 }

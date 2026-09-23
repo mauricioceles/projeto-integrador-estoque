@@ -1,52 +1,63 @@
+/* Componente principal: mantém listas compartilhadas e escolhe a tela exibida. */
 import { useEffect, useState } from "react";
+import Fornecedores from "./Fornecedores";
+import Produtos from "./Produtos";
 import "./App.css";
 
+// Endereço do backend local; a interface roda em uma porta diferente.
 const API = "http://localhost:3000";
 
-function App() {
+export default function App() {
+  // useState guarda dados da tela; chamar o setter solicita uma nova renderização.
   const [pagina, setPagina] = useState("produtos");
+  // Estas listas alimentam os contadores e as telas de cadastros.
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
+  // Controla o aviso de carregamento e evita novos cliques no botão de atualização.
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
 
+  // Consulta novamente a API ao abrir a aplicação ou após uma alteração de cadastro.
   async function carregarDados() {
     setCarregando(true);
     setErro("");
 
     try {
-      const [respostaProdutos, respostaFornecedores] = await Promise.all([
+      // Promise.all aguarda as duas consultas iniciadas em paralelo.
+      const respostas = await Promise.all([
         fetch(`${API}/produtos`),
         fetch(`${API}/fornecedores`)
       ]);
 
-      if (!respostaProdutos.ok || !respostaFornecedores.ok) {
-        throw new Error("Não foi possível consultar os dados do servidor.");
+      // fetch não lança erro por status HTTP 4xx/5xx; por isso verificamos resposta.ok.
+      if (respostas.some((resposta) => !resposta.ok)) {
+        throw new Error("Falha ao consultar os cadastros.");
       }
 
-      const listaProdutos = await respostaProdutos.json();
-      const listaFornecedores = await respostaFornecedores.json();
+      // Converte as respostas JSON em objetos e arrays JavaScript.
+      const [listaProdutos, listaFornecedores] = await Promise.all(
+        respostas.map((resposta) => resposta.json())
+      );
 
       setProdutos(listaProdutos);
       setFornecedores(listaFornecedores);
-    } catch (error) {
+    } catch {
       setErro(
-        `${error.message} Verifique se o backend está rodando na porta 3000.`
+        "Não foi possível atualizar os dados. Verifique o backend na porta 3000. As listas podem estar desatualizadas."
       );
+    // Executa tanto em caso de sucesso quanto de erro, encerrando o carregamento.
     } finally {
       setCarregando(false);
     }
   }
 
+  // Carrega dados na montagem. No StrictMode de desenvolvimento, o efeito pode repetir.
   useEffect(() => {
     carregarDados();
   }, []);
 
-  const moeda = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL"
-  });
-
+  // Cada componente organiza seu formulário e sua tabela; o App coordena a navegação.
+  // aoAtualizar é uma função passada ao componente filho para renovar as listas do pai.
   return (
     <div className="sistema">
       <header className="cabecalho">
@@ -66,18 +77,13 @@ function App() {
       </header>
 
       <main>
-        {erro && (
-          <div className="erro" role="alert">
-            {erro}
-          </div>
-        )}
+        {erro && <div className="erro" role="alert">{erro}</div>}
 
         <section className="resumo" aria-label="Resumo dos cadastros">
           <article className="cartao">
             <span>Produtos cadastrados</span>
             <strong>{carregando || erro ? "—" : produtos.length}</strong>
           </article>
-
           <article className="cartao">
             <span>Fornecedores cadastrados</span>
             <strong>{carregando || erro ? "—" : fornecedores.length}</strong>
@@ -92,7 +98,6 @@ function App() {
           >
             Produtos
           </button>
-
           <button
             className={pagina === "fornecedores" ? "aba ativa" : "aba"}
             aria-pressed={pagina === "fornecedores"}
@@ -102,74 +107,18 @@ function App() {
           </button>
         </nav>
 
-        <section className="painel" aria-busy={carregando}>
-          <h2>{pagina === "produtos" ? "Produtos" : "Fornecedores"}</h2>
-
-          {carregando ? (
-            <p>Consultando os cadastros...</p>
-          ) : erro ? (
-            <p>Os dados estão indisponíveis. Tente atualizar novamente.</p>
-          ) : pagina === "produtos" ? (
-            produtos.length === 0 ? (
-              <p>Nenhum produto cadastrado.</p>
-            ) : (
-              <div className="tabela-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th scope="col">Produto</th>
-                      <th scope="col">Código de barras</th>
-                      <th scope="col">Categoria</th>
-                      <th scope="col">Estoque</th>
-                      <th scope="col">Preço</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {produtos.map((produto) => (
-                      <tr key={produto.id}>
-                        <td>{produto.nome}</td>
-                        <td>{produto.codigo_barras || "Não informado"}</td>
-                        <td>{produto.categoria}</td>
-                        <td>{produto.quantidade_estoque}</td>
-                        <td>{moeda.format(produto.preco)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )
-          ) : fornecedores.length === 0 ? (
-            <p>Nenhum fornecedor cadastrado.</p>
-          ) : (
-            <div className="tabela-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Empresa</th>
-                    <th scope="col">CNPJ</th>
-                    <th scope="col">Contato</th>
-                    <th scope="col">Telefone</th>
-                    <th scope="col">E-mail</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fornecedores.map((fornecedor) => (
-                    <tr key={fornecedor.id}>
-                      <td>{fornecedor.nome_empresa}</td>
-                      <td>{fornecedor.cnpj}</td>
-                      <td>{fornecedor.contato_principal}</td>
-                      <td>{fornecedor.telefone}</td>
-                      <td>{fornecedor.email}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        {pagina === "fornecedores" ? (
+          <Fornecedores
+            fornecedores={fornecedores}
+            aoAtualizar={carregarDados}
+          />
+        ) : (
+          <Produtos
+            produtos={produtos}
+            aoAtualizar={carregarDados}
+          />
+        )}
       </main>
     </div>
   );
 }
-
-export default App;

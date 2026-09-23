@@ -1,8 +1,11 @@
+/* Operações de cadastro, consulta, edição e exclusão de produtos. */
 const express = require("express");
 const db = require("../database/database");
 
+// Agrupa rotas; req contém a requisição e res constrói a resposta HTTP.
 const router = express.Router();
 
+// Retorna erros por campo, utilizados pela interface para orientar o preenchimento.
 function validarProduto(dados) {
   const erros = {};
 
@@ -18,6 +21,7 @@ function validarProduto(dados) {
     erros.categoria = "A categoria é obrigatória.";
   }
 
+  // Converte a quantidade para verificar se é inteira e não negativa.
   const quantidade = Number(dados.quantidade_estoque);
 
   if (
@@ -45,6 +49,7 @@ function validarProduto(dados) {
 }
 
 // Listar produtos
+// GET lista registros: all() retorna um array, inclusive vazio quando não há cadastros.
 router.get("/", (req, res) => {
   const produtos = db
     .prepare("SELECT * FROM produtos ORDER BY nome")
@@ -54,6 +59,7 @@ router.get("/", (req, res) => {
 });
 
 // Consultar produto pelo ID
+// O parâmetro :id vem da URL; get() busca um registro e 404 indica ausência.
 router.get("/:id", (req, res) => {
   const produto = db
     .prepare("SELECT * FROM produtos WHERE id = ?")
@@ -69,6 +75,7 @@ router.get("/:id", (req, res) => {
 });
 
 // Cadastrar produto
+// POST cria um registro: 400 indica dados inválidos, 409 duplicidade e 201 criação.
 router.post("/", (req, res) => {
   const erros = validarProduto(req.body);
 
@@ -79,6 +86,7 @@ router.post("/", (req, res) => {
     });
   }
 
+  // Código vazio vira null: o SQLite permite vários valores NULL numa coluna UNIQUE.
   const codigoBarras = req.body.codigo_barras?.trim() || null;
 
   if (codigoBarras) {
@@ -93,6 +101,7 @@ router.post("/", (req, res) => {
     }
   }
 
+  // Os ? são parâmetros; run() grava os dados sem concatená-los ao comando SQL.
   const resultado = db.prepare(`
     INSERT INTO produtos (
       nome,
@@ -115,6 +124,7 @@ router.post("/", (req, res) => {
     req.body.imagem || null
   );
 
+  // lastInsertRowid permite consultar o produto que acabou de ser inserido.
   const produtoCriado = db
     .prepare("SELECT * FROM produtos WHERE id = ?")
     .get(resultado.lastInsertRowid);
@@ -126,6 +136,7 @@ router.post("/", (req, res) => {
 });
 
 // Atualizar produto
+// PUT recebe todos os campos do cadastro para atualizar o registro existente.
 router.put("/:id", (req, res) => {
   const produto = db
     .prepare("SELECT * FROM produtos WHERE id = ?")
@@ -149,6 +160,7 @@ router.put("/:id", (req, res) => {
   const codigoBarras = req.body.codigo_barras?.trim() || null;
 
   if (codigoBarras) {
+    // Exclui o próprio produto da verificação de duplicidade durante a edição.
     const codigoExistente = db.prepare(`
       SELECT id
       FROM produtos
@@ -197,6 +209,7 @@ router.put("/:id", (req, res) => {
 });
 
 // Excluir produto
+// DELETE remove o cadastro; changes informa quantas linhas foram afetadas.
 router.delete("/:id", (req, res) => {
   const resultado = db
     .prepare("DELETE FROM produtos WHERE id = ?")
@@ -213,4 +226,5 @@ router.delete("/:id", (req, res) => {
   });
 });
 
+// Disponibiliza estas rotas para registro no app.js.
 module.exports = router;

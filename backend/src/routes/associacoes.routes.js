@@ -1,14 +1,17 @@
+/* Gerencia vínculos entre cadastros existentes, sem duplicar os dados de produto e fornecedor. */
 const express = require("express");
 const db = require("../database/database");
 
 const router = express.Router();
 
+// IDs aceitos são números inteiros positivos dentro da precisão segura do JavaScript.
 function idValido(valor) {
   return Number.isSafeInteger(valor) && valor > 0;
 }
 
 // Associar fornecedor a produto
 router.post("/", (req, res) => {
+  // O corpo JSON deve enviar os IDs como números; {} evita erro se o corpo estiver ausente.
   const { produto_id, fornecedor_id } = req.body || {};
 
   if (!idValido(produto_id) || !idValido(fornecedor_id)) {
@@ -17,6 +20,7 @@ router.post("/", (req, res) => {
     });
   }
 
+  // Confirma a existência dos dois cadastros antes de inserir a associação.
   const produto = db
     .prepare("SELECT id FROM produtos WHERE id = ?")
     .get(produto_id);
@@ -37,6 +41,7 @@ router.post("/", (req, res) => {
     });
   }
 
+  // Verifica o par para retornar uma mensagem amigável em caso de vínculo duplicado.
   const associacao = db.prepare(`
     SELECT produto_id
     FROM produto_fornecedor
@@ -49,6 +54,7 @@ router.post("/", (req, res) => {
     });
   }
 
+  // Os ? vinculam valores ao SQL; a tabela intermediária guarda somente os IDs e a data.
   db.prepare(`
     INSERT INTO produto_fornecedor (produto_id, fornecedor_id)
     VALUES (?, ?)
@@ -62,6 +68,7 @@ router.post("/", (req, res) => {
 
 // Consultar os fornecedores de um produto
 router.get("/produto/:id", (req, res) => {
+  // Parâmetros da URL são texto; aqui são convertidos antes da validação.
   const id = Number(req.params.id);
 
   if (!idValido(id)) {
@@ -80,6 +87,7 @@ router.get("/produto/:id", (req, res) => {
     });
   }
 
+  // INNER JOIN cruza fornecedores com os vínculos do produto escolhido; all() retorna a lista.
   const fornecedores = db.prepare(`
     SELECT f.*
     FROM fornecedores AS f
@@ -112,6 +120,7 @@ router.get("/fornecedor/:id", (req, res) => {
     });
   }
 
+  // Faz a consulta inversa: produtos vinculados ao fornecedor selecionado.
   const produtos = db.prepare(`
     SELECT p.*
     FROM produtos AS p
@@ -135,11 +144,13 @@ router.delete("/:produtoId/:fornecedorId", (req, res) => {
     });
   }
 
+  // A exclusão atinge apenas a tabela de vínculos; os cadastros originais permanecem.
   const resultado = db.prepare(`
     DELETE FROM produto_fornecedor
     WHERE produto_id = ? AND fornecedor_id = ?
   `).run(produtoId, fornecedorId);
 
+  // Zero linhas afetadas significa que o vínculo solicitado não existia.
   if (resultado.changes === 0) {
     return res.status(404).json({
       mensagem: "Associação não encontrada."

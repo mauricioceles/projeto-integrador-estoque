@@ -1,7 +1,9 @@
+/* Inclui padding e borda no tamanho declarado dos elementos. */
 * {
   box-sizing: border-box;
 }
 
+/* Aparência global: fundo, tipografia e largura mínima da página. */
 body {
   margin: 0;
   min-width: 320px;
@@ -16,6 +18,7 @@ button {
   cursor: pointer;
 }
 
+/* Destaca o botão ao navegar pelo teclado. */
 button:focus-visible {
   outline: 3px solid #2563eb;
   outline-offset: 3px;
