@@ -291,3 +291,8 @@ button:disabled {
 .resultado-associacoes {
   margin-top: 24px;
 }
+
+/* object-fit preserva a proporção da foto no formulário e na tabela. */
+.foto-previa { width: 180px; height: 180px; object-fit: contain; border-radius: 8px; }
+.foto-miniatura { width: 64px; height: 64px; object-fit: contain; border-radius: 6px; }
+.campo input[type="checkbox"] { width: auto; margin-right: 8px; }

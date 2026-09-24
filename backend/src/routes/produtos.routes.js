@@ -1,6 +1,7 @@
 /* Operações de cadastro, consulta, edição e exclusão de produtos. */
 const express = require("express");
 const db = require("../database/database");
+const imagens = require("../services/imagens");
 
 // Agrupa rotas; req contém a requisição e res constrói a resposta HTTP.
 const router = express.Router();
@@ -121,7 +122,7 @@ router.post("/", (req, res) => {
     Number(req.body.quantidade_estoque),
     req.body.categoria.trim(),
     req.body.data_validade || null,
-    req.body.imagem || null
+    null
   );
 
   // lastInsertRowid permite consultar o produto que acabou de ser inserido.
@@ -194,7 +195,7 @@ router.put("/:id", (req, res) => {
     Number(req.body.quantidade_estoque),
     req.body.categoria.trim(),
     req.body.data_validade || null,
-    req.body.imagem || null,
+    produto.imagem,
     req.params.id
   );
 
@@ -211,6 +212,7 @@ router.put("/:id", (req, res) => {
 // Excluir produto
 // DELETE remove o cadastro; changes informa quantas linhas foram afetadas.
 router.delete("/:id", (req, res) => {
+  const produto = db.prepare("SELECT * FROM produtos WHERE id = ?").get(req.params.id);
   const resultado = db
     .prepare("DELETE FROM produtos WHERE id = ?")
     .run(req.params.id);
@@ -221,6 +223,7 @@ router.delete("/:id", (req, res) => {
     });
   }
 
+  imagens.remover(produto.imagem);
   res.json({
     mensagem: "Produto excluído com sucesso!"
   });

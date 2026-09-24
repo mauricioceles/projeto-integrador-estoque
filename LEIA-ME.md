@@ -1,4 +1,4 @@
-# Projeto Integrador — códigos comentados e tela de associações
+# Projeto Integrador — códigos comentados, associações e fotos
 
 Esta versão reúne os códigos comentados e a integração pendente da tela de produtos. O App.jsx agora importa e exibe Produtos.jsx, com formulário, listagem, edição e exclusão. O App.css inclui os estilos de select e textarea, foco e erros de validação.
 
@@ -106,7 +106,7 @@ Esta revisão comenta o código e integra a tela de produtos. Estas funcionalida
 - CNPJ é normalizado e verificado pelo tamanho, sem cálculo dos dígitos verificadores.
 - Há validações de campos, mas não uma validação completa de todos os tipos e formatos recebidos pela API.
 - Produtos verifica código numérico no formulário; essa mesma regra ainda não está implementada no backend.
-- O campo imagem é preservado na edição, mas o upload ainda não foi implementado.
+- Fotos PNG e JPEG de até 2 MiB podem ser enviadas, substituídas e removidas. A API confere MIME e assinatura binária; não realiza decodificação completa da imagem nem varredura antivírus.
 - Associações estão disponíveis na API e na interface, nos dois sentidos de consulta.
 - CREATE TABLE IF NOT EXISTS não migra estruturas de tabelas existentes.
 - Não há autenticação nesta versão; CORS não é controle de login.
@@ -142,3 +142,25 @@ O formulário de consulta usa envio explícito: mudar uma seleção limpa o resu
 ## Ordem sugerida de estudo
 
 Leia backend/app.js, database.js e uma rota de cadastro. Depois leia main.jsx, App.jsx e Fornecedores.jsx. Por fim, compare Produtos.jsx com Fornecedores.jsx e estude as consultas INNER JOIN em associacoes.routes.js.
+
+## Fotos dos produtos
+
+O formulário permite selecionar PNG ou JPEG de até 2 MiB (2.097.152 bytes), visualizar e salvar. O cadastro continua funcionando sem foto. Para alterar uma foto existente, edite o produto e selecione outro arquivo; para removê-la, marque Remover foto ao salvar. Cancelar edição descarta a seleção local.
+
+O fluxo tem duas requisições: primeiro POST/PUT com os dados em JSON, depois PUT /produtos/:id/imagem com o arquivo binário e Content-Type image/png ou image/jpeg. Não é usado multipart/form-data. DELETE /produtos/:id/imagem remove somente a foto. O cadastro JSON não aceita mais alterar o caminho da imagem: no cadastro ele começa nulo e, na edição, é preservado.
+
+A API cria a pasta backend/uploads, gera nomes UUID e guarda no banco um caminho como /uploads/UUID.png. Express disponibiliza essa pasta. O serviço imagens.js confere a assinatura e grava o arquivo; imagens.routes.js limita o tamanho, atualiza o banco e remove a foto antiga após o sucesso. A exclusão do produto limpa sua foto. Não há alteração na estrutura do banco nem novas dependências.
+
+Se o cadastro for salvo mas o upload falhar, o formulário fica em edição e avisa que os dados já foram gravados. Assim, uma nova tentativa não cria outro produto.
+
+### Instalação desta etapa
+
+Pare os dois servidores. A atualização desta etapa substitui backend/app.js, backend/src/routes/produtos.routes.js, frontend/src/Produtos.jsx, frontend/src/App.css e este guia; adiciona backend/src/routes/imagens.routes.js, backend/src/services/imagens.js e backend/uploads/.gitignore. Use o comando PowerShell fornecido na conversa, que cria backup antes de copiar. Reinicie backend e frontend com npm.cmd run dev em terminais separados. Não é necessário npm install.
+
+As fotos são ignoradas pelo Git. Para transferir os dados para outro computador ou fazer backup, copie tanto estoque.db quanto backend/uploads, com o servidor parado. O ZIP de código não contém seus dados pessoais nem fotos cadastradas.
+
+### Verificação desta etapa
+
+Os testes HTTP passaram com Express e SQLite temporário: cadastro, envio e acesso à foto, preservação ao editar, rejeição de formato e tamanho, substituição, remoção, limpeza ao excluir produto e produto inexistente. O frontend compilou com esbuild; testes React com DOM/API simulados verificaram prévia e recuperação de falha de upload sem duplicar cadastro. Esses testes usaram dependências temporárias, não alteraram os package.json entregues. O Vite com seu lockfile e a aparência no navegador devem ser conferidos no seu computador.
+
+Para conferir localmente: cadastre com foto, recarregue a página, edite apenas o preço, substitua a foto, remova a foto e exclua um produto de teste. Confirme as miniaturas e as mensagens em cada etapa.

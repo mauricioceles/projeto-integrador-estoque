@@ -1,6 +1,8 @@
 /* Ponto de entrada da API: prepara o banco, configura o Express e registra as rotas. */
 const express = require("express");
 const cors = require("cors");
+const imagens = require("./src/services/imagens");
+const imagensRoutes = require("./src/routes/imagens.routes");
 
 // Executar este módulo abre o SQLite e cria as tabelas ausentes.
 require("./src/database/database");
@@ -19,6 +21,12 @@ app.use(cors());
 app.use(express.json());
 // Cada prefixo encaminha a requisição ao módulo correspondente.
 app.use("/fornecedores", fornecedoresRoutes);
+// Disponibiliza somente a pasta de fotos, sem listar diretórios.
+app.use("/uploads", express.static(imagens.pasta, {
+  index: false,
+  setHeaders: (res) => res.setHeader("X-Content-Type-Options", "nosniff")
+}));
+app.use("/produtos", imagensRoutes);
 app.use("/produtos", produtosRoutes);
 app.use("/associacoes", associacoesRoutes);
 

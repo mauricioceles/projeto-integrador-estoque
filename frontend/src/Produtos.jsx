@@ -1,5 +1,5 @@
 /* Tela de produtos: formulário e lista compartilham as operações da API. */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Base da API usada por fetch para enviar os dados do formulário.
 const API = "http://localhost:3000";
@@ -28,8 +28,44 @@ export default function Produtos({ produtos, aoAtualizar }) {
   const [formulario, setFormulario] = useState({ ...vazio });
   // null significa novo cadastro; um ID indica edição de um registro existente.
   const [editandoId, setEditandoId] = useState(null);
-  // Preserva uma imagem já registrada durante a edição; o upload ainda não foi implementado.
+  // A foto atual vem do banco; o arquivo selecionado só é enviado ao salvar.
   const [imagemAtual, setImagemAtual] = useState(null);
+  const [arquivoFoto, setArquivoFoto] = useState(null);
+  const [previaFoto, setPreviaFoto] = useState("");
+  const [removerFoto, setRemoverFoto] = useState(false);
+  const entradaFoto = useRef(null);
+
+  // Libera a URL temporária ao trocar a foto ou sair da tela.
+  useEffect(() => {
+    if (!arquivoFoto) { setPreviaFoto(""); return; }
+    const url = URL.createObjectURL(arquivoFoto);
+    setPreviaFoto(url);
+    return () => URL.revokeObjectURL(url);
+  }, [arquivoFoto]);
+
+  function limparSelecaoFoto() {
+    setArquivoFoto(null);
+    setRemoverFoto(false);
+    if (entradaFoto.current) entradaFoto.current.value = "";
+  }
+
+  function selecionarFoto(evento) {
+    const arquivo = evento.target.files?.[0];
+    setArquivoFoto(null);
+    setErros((atuais) => ({ ...atuais, imagem: "" }));
+    if (!arquivo) return;
+    if (!["image/png", "image/jpeg"].includes(arquivo.type) || arquivo.size > 2 * 1024 * 1024) {
+      setErros((atuais) => ({ ...atuais, imagem: "Escolha PNG ou JPEG de até 2 MB." }));
+      evento.target.value = "";
+      return;
+    }
+    setArquivoFoto(arquivo);
+    setRemoverFoto(false);
+  }
+
+  function enderecoFoto(caminho) {
+    return typeof caminho === "string" && caminho.startsWith("/uploads/") ? `${API}${caminho}` : "";
+  }
   const [categoriaSelecionada, setCategoriaSelecionada] =
     useState("Eletrônicos");
   // Separa erros de campos, mensagem de sucesso e erro geral de comunicação.
@@ -41,6 +77,7 @@ export default function Produtos({ produtos, aoAtualizar }) {
 
   // Volta ao modo de cadastro, sem alterar registros já salvos no banco.
   function limpar() {
+    limparSelecaoFoto();
     setFormulario({ ...vazio });
     setEditandoId(null);
     setImagemAtual(null);
@@ -145,6 +182,24 @@ export default function Produtos({ produtos, aoAtualizar }) {
         return;
       }
 
+      // O produto já foi salvo. Se a foto falhar, mantemos o ID para evitar um cadastro duplicado.
+      if (arquivoFoto || removerFoto) {
+        try {
+          const respostaFoto = await fetch(`${API}/produtos/${dados.produto.id}/imagem`, {
+            method: removerFoto ? "DELETE" : "PUT",
+            ...(removerFoto ? {} : { headers: { "Content-Type": arquivoFoto.type }, body: arquivoFoto })
+          });
+          const foto = await respostaFoto.json();
+          if (!respostaFoto.ok) throw new Error(foto.mensagem || "Falha no envio da foto.");
+        } catch (falha) {
+          setEditandoId(dados.produto.id);
+          setImagemAtual(dados.produto.imagem || null);
+          setMensagem("Os dados do produto foram salvos.");
+          setErroGeral(`Não foi possível confirmar a alteração da foto. ${falha.message} Confira a lista antes de tentar novamente.`);
+          await aoAtualizar();
+          return;
+        }
+      }
       limpar();
       setMensagem(dados.mensagem);
       // Após a confirmação da API, consulta novamente as listas e os contadores no App.
@@ -162,6 +217,7 @@ export default function Produtos({ produtos, aoAtualizar }) {
 
   // Preenche o formulário com o registro escolhido; a alteração só é enviada ao salvar.
   function editar(produto) {
+    limparSelecaoFoto();
     setFormulario({
       nome: produto.nome,
       codigo_barras: produto.codigo_barras || "",
@@ -305,6 +361,25 @@ export default function Produtos({ produtos, aoAtualizar }) {
             )}
           </div>
 
+          <div className="campo formulario-acoes">
+            <label htmlFor="produto-foto">Foto do produto (opcional)</label>
+            <input id="produto-foto" ref={entradaFoto} type="file" accept="image/png,image/jpeg"
+              onChange={selecionarFoto} aria-describedby="foto-ajuda foto-erro" aria-invalid={Boolean(erros.imagem)} />
+            <small id="foto-ajuda">PNG ou JPEG de até 2 MB. A foto será enviada ao salvar.</small>
+            <small id="foto-erro" className="erro-campo">{erros.imagem}</small>
+            {!removerFoto && (previaFoto || enderecoFoto(imagemAtual)) && (
+              <img className="foto-previa" src={previaFoto || enderecoFoto(imagemAtual)} alt="Prévia da foto do produto" />
+            )}
+            {arquivoFoto && <button type="button" className="aba" onClick={limparSelecaoFoto}>Cancelar seleção da foto</button>}
+            {imagemAtual && <label>
+              <input type="checkbox" checked={removerFoto} onChange={(e) => {
+                setRemoverFoto(e.target.checked);
+                setArquivoFoto(null);
+                if (entradaFoto.current) entradaFoto.current.value = "";
+              }} /> Remover foto ao salvar
+            </label>}
+          </div>
+
           <div className="acoes formulario-acoes">
             <button className="botao" type="submit">
               {ocupado
@@ -329,6 +404,7 @@ export default function Produtos({ produtos, aoAtualizar }) {
           <table>
             <thead>
               <tr>
+                <th scope="col">Foto</th>
                 <th scope="col">Produto</th>
                 <th scope="col">Código de barras</th>
                 <th scope="col">Categoria</th>
@@ -340,6 +416,9 @@ export default function Produtos({ produtos, aoAtualizar }) {
             <tbody>
               {produtos.map((produto) => (
                 <tr key={produto.id}>
+                  <td>{enderecoFoto(produto.imagem) ? (
+                    <img className="foto-miniatura" src={enderecoFoto(produto.imagem)} alt={`Foto de ${produto.nome}`} loading="lazy" />
+                  ) : "Sem foto"}</td>
                   <td>{produto.nome}</td>
                   <td>{produto.codigo_barras || "Não informado"}</td>
                   <td>{produto.categoria}</td>
