@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Fornecedores from "./Fornecedores";
 import Produtos from "./Produtos";
+import Associacoes from "./Associacoes";
 import "./App.css";
 
 // Endereço do backend local; a interface roda em uma porta diferente.
@@ -105,9 +106,22 @@ export default function App() {
           >
             Fornecedores
           </button>
+          <button
+            className={pagina === "associacoes" ? "aba ativa" : "aba"}
+            aria-pressed={pagina === "associacoes"}
+            onClick={() => setPagina("associacoes")}
+          >
+            Associações
+          </button>
         </nav>
 
-        {pagina === "fornecedores" ? (
+        {pagina === "associacoes" ? (
+          <Associacoes
+            produtos={produtos}
+            fornecedores={fornecedores}
+            carregando={carregando}
+          />
+        ) : pagina === "fornecedores" ? (
           <Fornecedores
             fornecedores={fornecedores}
             aoAtualizar={carregarDados}

@@ -1,8 +1,8 @@
-# Projeto Integrador — guia dos códigos comentados
+# Projeto Integrador — códigos comentados e tela de associações
 
 Esta versão reúne os códigos comentados e a integração pendente da tela de produtos. O App.jsx agora importa e exibe Produtos.jsx, com formulário, listagem, edição e exclusão. O App.css inclui os estilos de select e textarea, foco e erros de validação.
 
-O App.jsx ficou menor porque a tabela de produtos já existe em Produtos.jsx. A formatação de preços permanece nesse componente. Os demais códigos comentados e as dependências foram preservados.
+O App.jsx ficou menor porque a tabela de produtos já existe em Produtos.jsx. A formatação de preços permanece nesse componente. A nova aba Associações permite criar vínculos, consultar nos dois sentidos e remover somente a associação. O backend e as dependências foram preservados.
 
 ## Versão pronta para substituir
 
@@ -33,6 +33,7 @@ Este pacote é uma revisão dos arquivos enviados, não uma distribuição compl
 | frontend/src/main.jsx | Inicializa React, estilos globais e StrictMode. |
 | frontend/src/App.jsx | Guarda listas compartilhadas, totais e navegação. |
 | frontend/src/Produtos.jsx | Implementa formulário e lista de produtos; conectado ao App. |
+| frontend/src/Associacoes.jsx | Cria e consulta vínculos, trata duplicidade e confirma a remoção. |
 | frontend/src/Fornecedores.jsx | Implementa formulário e lista de fornecedores. |
 | frontend/src/index.css | Define os estilos globais. |
 | frontend/src/App.css | Define os estilos dos painéis, tabelas e formulários. |
@@ -106,15 +107,15 @@ Esta revisão comenta o código e integra a tela de produtos. Estas funcionalida
 - Há validações de campos, mas não uma validação completa de todos os tipos e formatos recebidos pela API.
 - Produtos verifica código numérico no formulário; essa mesma regra ainda não está implementada no backend.
 - O campo imagem é preservado na edição, mas o upload ainda não foi implementado.
-- Associações estão disponíveis na API; a interface enviada ainda tem apenas abas Produtos e Fornecedores.
+- Associações estão disponíveis na API e na interface, nos dois sentidos de consulta.
 - CREATE TABLE IF NOT EXISTS não migra estruturas de tabelas existentes.
 - Não há autenticação nesta versão; CORS não é controle de login.
 
 ## Verificação desta revisão
 
-Os arquivos JavaScript passaram na verificação de sintaxe do Node. A integração JSX e as regras CSS alteradas foram revisadas no código; os JSON foram validados e o SQL executado em memória. Também foi conferido que o App importa e renderiza Produtos com a lista e o callback de atualização, e que os estilos contemplam select e textarea. Os demais arquivos de código permanecem iguais aos do pacote comentado anterior.
+Os arquivos JavaScript passaram na verificação de sintaxe do Node. A integração JSX e as regras CSS alteradas foram revisadas no código; os JSON foram validados e o SQL executado em memória. Também foi conferido que o App importa e renderiza Produtos com a lista e o callback de atualização, e que os estilos contemplam select e textarea. Nesta etapa foram alterados App.jsx e App.css, adicionado Associacoes.jsx e atualizado este guia. Não houve mudança no backend nem nas dependências.
 
-O build com as versões exatas do seu projeto e a aplicação completa não foram executados neste ambiente. O pacote não inclui as dependências instaladas nem os lockfiles.
+O frontend foi compilado com esbuild em um ambiente temporário. Testes React em DOM simulado, com API simulada, passaram para campos obrigatórios, IDs numéricos, duplicidade, consultas nos dois sentidos, cancelamento e remoção, lista vazia, falha e recuperação da consulta. O build Vite com as versões exatas do projeto e a execução integrada ao banco real ainda precisam ser conferidos no seu computador. Nenhuma dependência de teste foi adicionada ao projeto entregue. O pacote não inclui dependências instaladas nem lockfiles.
 
 ### Conferência no seu computador
 
@@ -125,6 +126,18 @@ O build com as versões exatas do seu projeto e a aplicação completa não fora
 5. Escolha Outro na categoria e confirme que aparece o campo para digitá-la.
 6. Exclua o produto de teste e confira se o contador volta ao valor anterior.
 7. Abra Fornecedores e confira se o formulário e a lista continuam aparecendo.
+
+### Como testar Associações
+
+1. Mantenha pelo menos um produto e um fornecedor cadastrados.
+2. Abra a aba Associações, selecione os dois cadastros e clique em Associar fornecedor.
+3. Repita o mesmo vínculo: a API deverá informar que ele já existe.
+4. Em Consultar vínculos, escolha Produto, selecione o produto e clique em Consultar.
+5. Mude para Fornecedor e confirme a consulta inversa.
+6. Clique em Remover vínculo e teste primeiro Cancelar. O vínculo deve permanecer.
+7. Remova confirmando. A associação deve desaparecer; produto e fornecedor continuam cadastrados.
+
+O formulário de consulta usa envio explícito: mudar uma seleção limpa o resultado anterior, e Consultar busca os dados atuais. Durante uma requisição, os controles da tela ficam bloqueados para evitar operações sobrepostas. Uma falha ao recarregar a lista após uma gravação é comunicada separadamente do sucesso da gravação.
 
 ## Ordem sugerida de estudo
 

@@ -81,6 +81,7 @@ h1 {
 /* Abas e destaque da seção selecionada. */
 .navegacao {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 16px;
 }
@@ -284,4 +285,9 @@ button:disabled {
 .campo textarea {
   min-height: 100px;
   resize: vertical;
+}
+
+/* Separa o resultado dos filtros da consulta de vínculos. */
+.resultado-associacoes {
+  margin-top: 24px;
 }
