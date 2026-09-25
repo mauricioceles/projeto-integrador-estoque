@@ -1,16 +1,11 @@
-# React + Vite
+# Frontend — Controle de Estoque
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+FACULDADE GRAN (https://faculdade.grancursosonline.com.br/)
 
-Currently, two official plugins are available:
+Projeto Disciplina Projeto Integrador
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Interface React com Vite. Nesta pasta execute `npm.cmd install` na primeira utilização e `npm.cmd run dev`. Mantenha o backend na porta 3000 em outro terminal. Para gerar a distribuição: `npm.cmd run build`.
 
-## React Compiler
+O Vite substitui a ferramenta Create React App exemplificada no roteiro; a interface continua sendo desenvolvida em React.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Veja o [README principal](../README.md) para execução completa, funcionalidades e testes.

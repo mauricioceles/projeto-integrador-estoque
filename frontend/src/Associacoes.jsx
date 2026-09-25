@@ -1,9 +1,35 @@
+import { formatarCnpj } from "./formatacao";
 /* Relaciona cadastros existentes: um produto pode ter vários fornecedores e vice-versa. */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const API = "http://localhost:3000/associacoes";
 
-export default function Associacoes({ produtos, fornecedores, carregando }) {
+// Exibe dados do produto sem permitir edição nesta tela de vínculos.
+function DetalhesProduto({ produto, prefixo }) {
+  if (!produto) return null;
+  return (
+    <section className="detalhes-produto" aria-label="Detalhes do produto">
+      <h3>Detalhes do produto</h3>
+      <div className="campo">
+        <label htmlFor={`${prefixo}-nome`}>Nome do produto</label>
+        <input id={`${prefixo}-nome`} readOnly value={produto.nome || ""} />
+      </div>
+      <div className="campo">
+        <label htmlFor={`${prefixo}-codigo`}>Código de barras</label>
+        <input id={`${prefixo}-codigo`} readOnly value={produto.codigo_barras || "Não informado"} />
+      </div>
+      <div className="campo">
+        <label htmlFor={`${prefixo}-descricao`}>Descrição do produto</label>
+        <textarea id={`${prefixo}-descricao`} readOnly rows={3} value={produto.descricao || ""} />
+      </div>
+      {typeof produto.imagem === "string" && produto.imagem.startsWith("/uploads/") ? (
+        <img className="foto-previa" src={`http://localhost:3000${produto.imagem}`} alt={`Foto de ${produto.nome}`} />
+      ) : <p>Produto sem foto cadastrada.</p>}
+    </section>
+  );
+}
+
+export default function Associacoes({ produtos, fornecedores, carregando, produtoInicial = null }) {
   const [produtoId, setProdutoId] = useState("");
   const [fornecedorId, setFornecedorId] = useState("");
   // O tipo define o sentido da consulta; o ID identifica o cadastro escolhido.
@@ -15,6 +41,37 @@ export default function Associacoes({ produtos, fornecedores, carregando }) {
   const [mensagem, setMensagem] = useState("");
   const bloqueado = ocupado || carregando;
   const opcoes = tipo === "produto" ? produtos : fornecedores;
+  const produtoSelecionado = produtos.find((produto) => String(produto.id) === produtoId);
+
+  // Ao chegar pelo atalho, consulta automaticamente. O cleanup ignora respostas
+  // atrasadas se o usuário sair da tela, inclusive no StrictMode do desenvolvimento.
+  useEffect(() => {
+    setProdutoId(produtoInicial ? String(produtoInicial) : "");
+    setFornecedorId("");
+    setTipo("produto");
+    setConsultaId(produtoInicial ? String(produtoInicial) : "");
+    setResultado(null);
+    setErro("");
+    setMensagem("");
+    if (!produtoInicial) { setOcupado(false); return; }
+    const controle = new AbortController();
+    let ativo = true;
+    setOcupado(true);
+    async function abrirConsulta() {
+      try {
+        const resposta = await fetch(`${API}/produto/${produtoInicial}`, { signal: controle.signal });
+        const dados = await resposta.json();
+        if (!resposta.ok) throw new Error(dados.mensagem || "Falha ao consultar fornecedores.");
+        if (ativo) setResultado(dados);
+      } catch (falha) {
+        if (ativo) setErro(falha instanceof TypeError ? "Não foi possível consultar. Verifique o backend e clique em Consultar para tentar novamente." : falha.message);
+      } finally {
+        if (ativo) setOcupado(false);
+      }
+    }
+    abrirConsulta();
+    return () => { ativo = false; controle.abort(); };
+  }, [produtoInicial]);
 
   // Centraliza a leitura do JSON e transforma erros HTTP em mensagens da API.
   async function requisitar(caminho, opcoes = {}) {
@@ -120,6 +177,7 @@ export default function Associacoes({ produtos, fornecedores, carregando }) {
       {mensagem && <div className="sucesso" role="status">{mensagem}</div>}
       {erro && <div className="erro" role="alert">{erro}</div>}
       {carregando && <p role="status">Atualizando cadastros...</p>}
+      {ocupado && <p role="status">Aguarde, processando a solicitação...</p>}
       {!carregando && (!produtos.length || !fornecedores.length) && (
         <p>Cadastre pelo menos um produto e um fornecedor para criar um vínculo.</p>
       )}
@@ -140,6 +198,9 @@ export default function Associacoes({ produtos, fornecedores, carregando }) {
               <option value="">Selecione um fornecedor</option>
               {fornecedores.map((f) => <option key={f.id} value={f.id}>{f.nome_empresa} — ID {f.id}</option>)}
             </select>
+          </div>
+          <div className="formulario-acoes">
+            <DetalhesProduto produto={produtoSelecionado} prefixo="vincular" />
           </div>
           <div className="acoes formulario-acoes">
             <button className="botao" type="submit" disabled={!produtos.length || !fornecedores.length}>Associar fornecedor</button>
@@ -174,6 +235,7 @@ export default function Associacoes({ produtos, fornecedores, carregando }) {
       {/* null representa ausência de consulta; uma lista vazia significa consulta concluída sem vínculos. */}
       {resultado && (
         <div className="resultado-associacoes">
+          {tipo === "produto" && <DetalhesProduto produto={resultado.produto} prefixo="consultar" />}
           <h3>{tipo === "produto" ? `Fornecedores de ${resultado.produto.nome}` : `Produtos de ${resultado.fornecedor.nome_empresa}`}</h3>
           {vinculados.length === 0 ? <p role="status">Nenhum vínculo encontrado.</p> : (
             <div className="tabela-container">
@@ -186,7 +248,7 @@ export default function Associacoes({ produtos, fornecedores, carregando }) {
                 <tbody>{vinculados.map((item) => (
                   <tr key={item.id}>
                     <td>{tipo === "produto" ? item.nome_empresa : item.nome}</td>
-                    <td>{tipo === "produto" ? item.cnpj : item.codigo_barras || "Não informado"}</td>
+                    <td>{tipo === "produto" ? formatarCnpj(item.cnpj) : item.codigo_barras || "Não informado"}</td>
                     <td><button className="botao-excluir" type="button" disabled={bloqueado} onClick={() => remover(item)}>Remover vínculo</button></td>
                   </tr>
                 ))}</tbody>

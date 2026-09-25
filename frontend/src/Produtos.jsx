@@ -1,3 +1,4 @@
+import { correspondeBusca } from "./busca";
 /* Tela de produtos: formulário e lista compartilham as operações da API. */
 import { useEffect, useRef, useState } from "react";
 
@@ -23,7 +24,10 @@ const moeda = new Intl.NumberFormat("pt-BR", {
 });
 
 // Recebe a lista por props e uma função do App para atualizar os dados após gravações.
-export default function Produtos({ produtos, aoAtualizar }) {
+export default function Produtos({ produtos, aoAtualizar, aoVerFornecedores }) {
+  const [busca, setBusca] = useState("");
+  // A lista filtrada é derivada dos dados atuais; os totais do App continuam completos.
+  const filtrados = produtos.filter((item) => correspondeBusca(item.nome, item.codigo_barras, busca));
   // Campos controlados: o estado guarda os valores que aparecem nos inputs.
   const [formulario, setFormulario] = useState({ ...vazio });
   // null significa novo cadastro; um ID indica edição de um registro existente.
@@ -281,6 +285,13 @@ export default function Produtos({ produtos, aoAtualizar }) {
           id={`produto-${nome}`}
           name={nome}
           type={tipo}
+          placeholder={{
+            nome: "Insira o nome do produto",
+            codigo_barras: "Insira o código de barras",
+            preco: "Ex.: 35,90",
+            quantidade_estoque: "Quantidade disponível",
+            categoria: "Informe a categoria"
+          }[nome]}
           value={formulario[nome]}
           onChange={alterar}
           aria-invalid={Boolean(erros[nome])}
@@ -347,6 +358,7 @@ export default function Produtos({ produtos, aoAtualizar }) {
             <textarea
               id="produto-descricao"
               name="descricao"
+              placeholder="Descreva brevemente o produto"
               rows={3}
               value={formulario.descricao}
               onChange={alterar}
@@ -397,8 +409,20 @@ export default function Produtos({ produtos, aoAtualizar }) {
 
       <h2 className="titulo-lista">Produtos cadastrados</h2>
 
+      <div className="barra-busca">
+        <div className="campo">
+          <label htmlFor="busca-produtos">Buscar por nome ou código de barras</label>
+          <input id="busca-produtos" type="search" value={busca}
+            onChange={(evento) => setBusca(evento.target.value)} placeholder="Digite para filtrar a lista" />
+        </div>
+        <button className="aba" type="button" onClick={() => setBusca("")} disabled={!busca}>Limpar busca</button>
+      </div>
+      <p role="status">{filtrados.length} de {produtos.length} produtos na lista.</p>
+
       {produtos.length === 0 ? (
         <p>Nenhum produto cadastrado.</p>
+      ) : filtrados.length === 0 ? (
+        <p>Nenhum resultado para esta busca.</p>
       ) : (
         <div className="tabela-container">
           <table>
@@ -414,7 +438,7 @@ export default function Produtos({ produtos, aoAtualizar }) {
               </tr>
             </thead>
             <tbody>
-              {produtos.map((produto) => (
+              {filtrados.map((produto) => (
                 <tr key={produto.id}>
                   <td>{enderecoFoto(produto.imagem) ? (
                     <img className="foto-miniatura" src={enderecoFoto(produto.imagem)} alt={`Foto de ${produto.nome}`} loading="lazy" />
@@ -426,6 +450,10 @@ export default function Produtos({ produtos, aoAtualizar }) {
                   <td>{moeda.format(produto.preco)}</td>
                   <td>
                     <div className="acoes">
+                      <button className="aba" type="button" disabled={ocupado}
+                        onClick={() => aoVerFornecedores(produto.id)}>
+                        Ver fornecedores
+                      </button>
                       <button
                         className="aba"
                         disabled={ocupado}

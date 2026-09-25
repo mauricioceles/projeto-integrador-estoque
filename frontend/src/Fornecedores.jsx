@@ -1,3 +1,5 @@
+import { formatarCnpj, formatarTelefone } from "./formatacao";
+import { correspondeBusca } from "./busca";
 /* Tela de fornecedores: formulário e lista compartilham as operações da API. */
 import { useState } from "react";
 
@@ -24,8 +26,21 @@ const campos = [
   ["contato_principal", "Contato principal", "text"]
 ];
 
+// Exemplos ajudam no preenchimento sem substituir os rótulos dos campos.
+const exemplos = {
+  nome_empresa: "Insira o nome da empresa",
+  cnpj: "00.000.000/0000-00",
+  endereco: "Insira o endereço completo da empresa",
+  telefone: "(00) 0000-0000",
+  email: "exemplo@fornecedor.com",
+  contato_principal: "Nome do contato principal"
+};
+
 // Recebe a lista por props e uma função do App para atualizar os dados após gravações.
 export default function Fornecedores({ fornecedores, aoAtualizar }) {
+  const [busca, setBusca] = useState("");
+  // A lista filtrada é derivada dos dados atuais; os totais do App continuam completos.
+  const filtrados = fornecedores.filter((item) => correspondeBusca(item.nome_empresa, item.cnpj, busca));
   // Campos controlados: o estado guarda os valores que aparecem nos inputs.
   const [formulario, setFormulario] = useState({ ...formularioVazio });
   // null significa novo cadastro; um ID indica edição de um registro existente.
@@ -50,7 +65,7 @@ export default function Fornecedores({ fornecedores, aoAtualizar }) {
 
     setFormulario((atual) => ({
       ...atual,
-      [name]: value
+      [name]: name === "cnpj" ? formatarCnpj(value) : name === "telefone" ? formatarTelefone(value) : value
     }));
 
     setErros((atuais) => ({
@@ -129,6 +144,8 @@ export default function Fornecedores({ fornecedores, aoAtualizar }) {
       dados[nome] = fornecedor[nome] || "";
     }
 
+    dados.cnpj = formatarCnpj(dados.cnpj);
+    dados.telefone = formatarTelefone(dados.telefone);
     setFormulario(dados);
     setEditandoId(fornecedor.id);
     setErros({});
@@ -204,6 +221,8 @@ export default function Fornecedores({ fornecedores, aoAtualizar }) {
                 id={`fornecedor-${nome}`}
                 name={nome}
                 type={tipo}
+                placeholder={exemplos[nome]}
+                inputMode={nome === "cnpj" || nome === "telefone" ? "numeric" : undefined}
                 value={formulario[nome]}
                 onChange={alterarCampo}
                 required
@@ -245,8 +264,20 @@ export default function Fornecedores({ fornecedores, aoAtualizar }) {
 
       <h2 className="titulo-lista">Fornecedores cadastrados</h2>
 
+      <div className="barra-busca">
+        <div className="campo">
+          <label htmlFor="busca-fornecedores">Buscar por nome da empresa ou CNPJ</label>
+          <input id="busca-fornecedores" type="search" value={busca}
+            onChange={(evento) => setBusca(evento.target.value)} placeholder="Digite para filtrar a lista" />
+        </div>
+        <button className="aba" type="button" onClick={() => setBusca("")} disabled={!busca}>Limpar busca</button>
+      </div>
+      <p role="status">{filtrados.length} de {fornecedores.length} fornecedores na lista.</p>
+
       {fornecedores.length === 0 ? (
         <p>Nenhum fornecedor cadastrado.</p>
+      ) : filtrados.length === 0 ? (
+        <p>Nenhum resultado para esta busca.</p>
       ) : (
         <div className="tabela-container">
           <table>
@@ -262,12 +293,12 @@ export default function Fornecedores({ fornecedores, aoAtualizar }) {
             </thead>
 
             <tbody>
-              {fornecedores.map((fornecedor) => (
+              {filtrados.map((fornecedor) => (
                 <tr key={fornecedor.id}>
                   <td>{fornecedor.nome_empresa}</td>
-                  <td>{fornecedor.cnpj}</td>
+                  <td>{formatarCnpj(fornecedor.cnpj)}</td>
                   <td>{fornecedor.contato_principal}</td>
-                  <td>{fornecedor.telefone}</td>
+                  <td>{formatarTelefone(fornecedor.telefone)}</td>
                   <td>{fornecedor.email}</td>
                   <td>
                     <div className="acoes">

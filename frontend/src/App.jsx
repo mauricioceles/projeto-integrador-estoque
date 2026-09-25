@@ -11,6 +11,13 @@ const API = "http://localhost:3000";
 export default function App() {
   // useState guarda dados da tela; chamar o setter solicita uma nova renderização.
   const [pagina, setPagina] = useState("produtos");
+  const [produtoConsulta, setProdutoConsulta] = useState(null);
+
+  // O atalho leva o ID do produto à tela que já consulta as associações.
+  function verFornecedores(id) {
+    setProdutoConsulta(id);
+    setPagina("associacoes");
+  }
   // Estas listas alimentam os contadores e as telas de cadastros.
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
@@ -109,7 +116,7 @@ export default function App() {
           <button
             className={pagina === "associacoes" ? "aba ativa" : "aba"}
             aria-pressed={pagina === "associacoes"}
-            onClick={() => setPagina("associacoes")}
+            onClick={() => { setProdutoConsulta(null); setPagina("associacoes"); }}
           >
             Associações
           </button>
@@ -117,6 +124,7 @@ export default function App() {
 
         {pagina === "associacoes" ? (
           <Associacoes
+            produtoInicial={produtoConsulta}
             produtos={produtos}
             fornecedores={fornecedores}
             carregando={carregando}
@@ -128,6 +136,7 @@ export default function App() {
           />
         ) : (
           <Produtos
+            aoVerFornecedores={verFornecedores}
             produtos={produtos}
             aoAtualizar={carregarDados}
           />

@@ -164,3 +164,25 @@ As fotos são ignoradas pelo Git. Para transferir os dados para outro computador
 Os testes HTTP passaram com Express e SQLite temporário: cadastro, envio e acesso à foto, preservação ao editar, rejeição de formato e tamanho, substituição, remoção, limpeza ao excluir produto e produto inexistente. O frontend compilou com esbuild; testes React com DOM/API simulados verificaram prévia e recuperação de falha de upload sem duplicar cadastro. Esses testes usaram dependências temporárias, não alteraram os package.json entregues. O Vite com seu lockfile e a aparência no navegador devem ser conferidos no seu computador.
 
 Para conferir localmente: cadastre com foto, recarregue a página, edite apenas o preço, substitua a foto, remova a foto e exclua um produto de teste. Confirme as miniaturas e as mensagens em cada etapa.
+
+## Busca de cadastros e atalho para fornecedores
+
+Produtos: o campo Buscar por nome ou código de barras filtra a tabela enquanto você digita. Fornecedores: busca por nome da empresa ou CNPJ, com ou sem máscara. As buscas não diferenciam letras maiúsculas de minúsculas nem acentos. Limpar busca restaura a lista completa. O resumo do App continua mostrando os totais gerais; abaixo da busca aparece a quantidade filtrada.
+
+O botão Ver fornecedores de cada produto abre Associações, seleciona o produto pelo ID e consulta automaticamente seus fornecedores. Se não houver vínculos, mostra uma mensagem. Se a consulta falhar, é possível repetir pelo botão Consultar. A aba Associações continua permitindo consultas manuais nos dois sentidos.
+
+A busca acontece no frontend sobre os dados já carregados. Clique em Atualizar dados para buscar cadastros novos no backend. Esta versão não faz paginação e destina-se ao volume do projeto acadêmico. Ao sair de uma aba, o formulário e o filtro locais são desmontados, como nas versões anteriores.
+
+Arquivos alterados: App.jsx, Produtos.jsx, Fornecedores.jsx, Associacoes.jsx, App.css e este guia. Arquivo novo: frontend/src/busca.js. Não há mudança no backend, no banco ou nas dependências.
+
+Verificação: frontend compilado com esbuild; testes React em DOM/API simulados passaram para nome com acentos/maiúsculas, código parcial, CNPJ com/sem máscara, limpar filtro, ausência de resultados, atalho com ID correto, ausência de vínculos e recuperação de erro. Os testes anteriores de associação e envio de foto também passaram. Confira a aparência e o build Vite no seu computador.
+
+## Ajustes de aderência ao enunciado
+
+A tela de associações apresenta nome, código e descrição somente para leitura, além da foto quando cadastrada. Os detalhes acompanham o produto escolhido no formulário de novo vínculo e a consulta por produto. O botão Ver fornecedores preenche tanto a consulta quanto a seleção para associar.
+
+Fornecedores ganhou máscaras numéricas de CNPJ e telefone (fixo/celular com DDD), inclusive na edição e nas listas. Produtos e Fornecedores têm exemplos nos campos. Campos de data mantêm o seletor nativo do navegador, cujo formato depende da configuração regional. A máscara é apresentação, não validação dos dígitos verificadores.
+
+Foram adicionados README.md na raiz, backend e frontend, com identificação da faculdade/disciplina, instruções e limites conhecidos. O HTML agora informa idioma pt-BR e o título do projeto. A publicação no GitHub continua pendente de conferir git remote -v no computador do autor; nenhum repositório foi criado ou publicado nesta revisão.
+
+Verificação: compilação esbuild; testes de máscaras; detalhes somente leitura, foto e produto preenchido nos dois formulários; regressões de busca, associações e recuperação de falha de foto, com DOM/API simulados. A conferência visual e npm.cmd run build no ambiente do autor ainda são necessários para esta versão.

@@ -296,3 +296,13 @@ button:disabled {
 .foto-previa { width: 180px; height: 180px; object-fit: contain; border-radius: 8px; }
 .foto-miniatura { width: 64px; height: 64px; object-fit: contain; border-radius: 6px; }
 .campo input[type="checkbox"] { width: auto; margin-right: 8px; }
+
+/* Busca e limpeza ficam próximas da lista e se ajustam a telas estreitas. */
+.barra-busca { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.barra-busca .campo { flex: 1 1 240px; min-width: 0; }
+
+/* Dados somente leitura identificam o produto antes de criar ou remover vínculos. */
+.detalhes-produto { margin: 16px 0; padding: 16px; background: #f7fafb; border: 1px solid #dfe7ec; border-radius: 10px; }
+.detalhes-produto h3 { margin-top: 0; }
+.detalhes-produto .campo { margin-bottom: 12px; }
+.detalhes-produto input[readonly], .detalhes-produto textarea[readonly] { background: #eef3f6; }
