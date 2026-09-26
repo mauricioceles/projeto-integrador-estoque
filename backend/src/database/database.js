@@ -1,9 +1,14 @@
 /* Conexão compartilhada com SQLite e definição das três tabelas do sistema. */
 const Database = require("better-sqlite3");
 const path = require("path");
+const fs = require("node:fs");
 
 // __dirname fixa o banco nesta pasta, independentemente de onde o Node foi iniciado.
-const databasePath = path.join(__dirname, "estoque.db");
+// DATA_DIR deve apontar para um volume persistente na hospedagem.
+// Sem essa variável, mantém o mesmo banco usado no computador do autor.
+const pastaDados = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : __dirname;
+fs.mkdirSync(pastaDados, { recursive: true });
+const databasePath = path.join(pastaDados, "estoque.db");
 // Abre o arquivo existente ou cria um novo banco se ele ainda não existir.
 const db = new Database(databasePath);
 

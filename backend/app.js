@@ -13,7 +13,11 @@ const associacoesRoutes = require("./src/routes/associacoes.routes");
 
 // A aplicação precisa existir antes de receber configurações com app.use.
 const app = express();
-const PORT = 3000;
+// Na nuvem, a plataforma informa a porta. Localmente continuamos na porta 3000.
+const PORT = Number(process.env.PORT || 3000);
+if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
+  throw new Error("PORT deve ser uma porta válida entre 1 e 65535.");
+}
 
 // Permite chamadas do frontend, que usa outra porta (origem). Não é autenticação.
 app.use(cors());
@@ -46,6 +50,6 @@ app.get("/status", (req, res) => {
 });
 
 // Inicia a escuta de requisições HTTP na porta configurada.
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });

@@ -2,7 +2,10 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { randomUUID } = require("node:crypto");
-const pasta = path.resolve(__dirname, "../../uploads");
+// O banco e as fotos compartilham o volume persistente configurado na nuvem.
+const pasta = process.env.DATA_DIR
+  ? path.join(path.resolve(process.env.DATA_DIR), "uploads")
+  : path.resolve(__dirname, "../../uploads");
 fs.mkdirSync(pasta, { recursive: true });
 
 function salvar(buffer, tipo) {
